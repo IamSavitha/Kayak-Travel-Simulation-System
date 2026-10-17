@@ -67,7 +67,7 @@ The frontend runs on `:3000` and the services on `:8001`–`:8008` (full port ta
 
 ## My role
 
-<!-- TODO: your contributions (Distributed Systems group project, Fall 2025) -->
+<!-- TODO: your contributions (team project) -->
 
 ---
 
@@ -351,4 +351,4 @@ locust -f load_test.py --host=http://localhost:8001
 
 ## Team
 
-Distributed Systems Group Project - Fall 2025
+Built by a team working in parallel feature streams (user/admin/AI, listings, booking and reviews, billing and payments, Kafka/Redis, testing and deployment), integrated in three phases: foundation, services, final.

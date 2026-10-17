@@ -330,7 +330,7 @@ docker-compose restart
 
 ---
 
-## Deliverables for Presentation
+## Reporting Artifacts
 
 1. **4 Bar Charts** showing:
    - Average Response Time comparison
