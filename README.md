@@ -1,8 +1,79 @@
 # Kayak Travel Simulation System
 
-A distributed 3-tier travel booking and recommendation system simulating Kayak functionality, built with FastAPI, React, Kafka, MySQL, MongoDB, and Redis.
+> Distributed, microservice-based travel booking platform (flights, hotels, cars) with event streaming over Kafka, Redis caching and a deals/concierge service. Load-tested to about 2,900 requests/s at 100 concurrent users with 0% errors.
 
-##  Architecture
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
+![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
+![Apache Kafka](https://img.shields.io/badge/Apache%20Kafka-231F20?logo=apachekafka&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-DC382D?logo=redis&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-4479A1?logo=mysql&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-47A248?logo=mongodb&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
+![JMeter](https://img.shields.io/badge/Apache%20JMeter-D22128?logo=apachejmeter&logoColor=white)
+
+## Highlights
+
+- **10 FastAPI microservices**: user, flight, hotel, car, booking, billing, search, admin/analytics, email and AI. They run alongside MySQL, MongoDB, Redis, Kafka and the React frontend as **17 Docker Compose containers**.
+- **Polyglot persistence.** MySQL (SQLModel) holds transactional data such as users, listings and bookings; MongoDB (Motor) holds reviews, logs and analytics; Redis caches hot SQL reads.
+- **Event-driven.** Kafka topics carry supplier feeds, deals and booking events between services. The AI service pushes live deals to the UI over WebSockets.
+- **Measured performance.** Apache JMeter tests with 100 concurrent users across four configurations (results below).
+- **Admin analytics.** Revenue by city and listing performance, shown on a React + Recharts dashboard.
+
+## Performance results
+
+100 concurrent users, Apache JMeter (`jmeter/results/`):
+
+| Configuration | Requests | Mean latency | p95 latency | Throughput | Errors |
+|---|---:|---:|---:|---:|---:|
+| **B**: base | 49,014 | 583 ms | 1,401 ms | 163 req/s | 0% |
+| **B+S**: + Redis SQL caching | 866,192 | 33 ms | 81 ms | 2,887 req/s | 0% |
+| **B+S+K**: + Kafka | 903,019 | 32 ms | 89 ms | 3,010 req/s | 0% |
+| **B+S+K+X**: + additional optimizations | 846,580 | 34 ms | 79 ms | 2,822 req/s | 0% |
+
+**Redis caching cut mean latency about 17× (583 → 33 ms) and raised throughput about 18× (163 → 2,887 req/s).**
+
+<p>
+  <img src="jmeter/results/charts/throughput.png" alt="Throughput by configuration" width="48%">
+  <img src="jmeter/results/charts/avg_response_time.png" alt="Average response time by configuration" width="48%">
+</p>
+
+## Architecture at a glance
+
+```mermaid
+flowchart LR
+    FE[React + TypeScript<br/>Vite, Tailwind, React Query] -->|REST / WebSocket| SVC
+    subgraph SVC[FastAPI microservices]
+        US[user] & FS[flight] & HS[hotel] & CS[car]
+        BK[booking] & BL[billing] & SS[search] & AD[admin/analytics]
+        EM[email] & AI[AI: deals + concierge]
+    end
+    SVC --> MY[(MySQL)]
+    SVC --> MG[(MongoDB)]
+    SVC <--> RD[(Redis cache)]
+    SVC <-->|supplier_feeds, deals.*, bookings.*| KF[[Apache Kafka]]
+```
+
+## Quickstart
+
+```bash
+git clone https://github.com/IamSavitha/Kayak-Travel-Simulation-System.git
+cd Kayak-Travel-Simulation-System
+docker-compose up -d     # 17 containers: infra + 10 services + frontend
+docker-compose ps
+```
+
+The frontend runs on `:3000` and the services on `:8001`–`:8008` (full port table below). Kafka UI is included for inspecting topics.
+
+## My role
+
+<!-- TODO: your contributions (Distributed Systems group project, Fall 2025) -->
+
+---
+
+# Detailed documentation
+
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -45,7 +116,7 @@ A distributed 3-tier travel booking and recommendation system simulating Kayak f
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-##  Project Structure
+## Project Structure
 
 ```
 kayak-simulation/
@@ -115,7 +186,7 @@ kayak-simulation/
 └── requirements.txt            # Python dependencies
 ```
 
-##  Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -128,7 +199,8 @@ kayak-simulation/
 
 ```bash
 # Clone the repository
-cd kayak-simulation
+git clone https://github.com/IamSavitha/Kayak-Travel-Simulation-System.git
+cd Kayak-Travel-Simulation-System
 
 # Start all services
 docker-compose up -d
@@ -163,7 +235,7 @@ npm install
 npm run dev
 ```
 
-##  Service Ports
+## Service Ports
 
 | Service | Port |
 |---------|------|
@@ -181,7 +253,7 @@ npm run dev
 | Redis | 6379 |
 | Kafka | 9092 |
 
-##  API Overview
+## API Overview
 
 ### User Service
 - `POST /users` - Create user (validates SSN, ZIP, State)
@@ -219,7 +291,7 @@ npm run dev
 - `POST /api/chat` - Chat with concierge
 - `WS /ws/events` - Real-time deal updates
 
-##  Validation Rules
+## Validation Rules
 
 | Field | Format | Example |
 |-------|--------|---------|
@@ -227,7 +299,7 @@ npm run dev
 | ZIP Code | XXXXX or XXXXX-XXXX | 95123, 95123-4567 |
 | State | 2-letter abbreviation | CA, NY, TX |
 
-##  Testing
+## Testing
 
 ```bash
 # Run unit tests
@@ -241,13 +313,13 @@ cd tests/performance
 locust -f load_test.py --host=http://localhost:8001
 ```
 
-##  Additional Resources
+## Additional Resources
 
 - Module testing guides: See `tests/README.md` for test scripts
 - Implementation guides: See project structure for module-specific guides
 - OpenAPI Specs: Available at `/docs` on each service
 
-##  Technology Stack
+## Technology Stack
 
 **Backend:**
 - Python 3.10+
@@ -272,9 +344,10 @@ locust -f load_test.py --host=http://localhost:8001
 - MongoDB 6
 - Redis 7
 
-**AI/ML:**
-- LangChain
-- OpenAI/Anthropic API integration
+**AI service:**
+- Rule-based intent parsing and constraint extraction (concierge)
+- Kafka-driven deal scoring and tagging (deals agent)
+- WebSocket push for live deals
 
 ## Team
 
